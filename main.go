@@ -38,5 +38,6 @@ func main() {
 	// routing
 	e := echo.New()
 	e.POST("/events", eventHandler.Create)
+	e.POST("/events/:id/payments", eventHandler.AddPayment)
 	e.Logger.Fatal(e.Start(":8080"))
 }

@@ -18,6 +18,7 @@ type Member struct {
 }
 
 type MemberToPayment struct {
+	EventID   string
 	MemberID  string
 	PaymentID string
 }

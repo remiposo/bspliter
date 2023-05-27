@@ -30,3 +30,14 @@ DELETE FROM event WHERE id = ?
 func (q *Queries) DeleteEvent(ctx context.Context, id string) (sql.Result, error) {
 	return q.db.ExecContext(ctx, deleteEvent, id)
 }
+
+const getEventByID = `-- name: GetEventByID :one
+SELECT id, name FROM event WHERE id = ?
+`
+
+func (q *Queries) GetEventByID(ctx context.Context, id string) (Event, error) {
+	row := q.db.QueryRowContext(ctx, getEventByID, id)
+	var i Event
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}

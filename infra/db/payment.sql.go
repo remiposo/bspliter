@@ -31,3 +31,36 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (s
 		arg.MemberID,
 	)
 }
+
+const listPaymentsByEventID = `-- name: ListPaymentsByEventID :many
+SELECT id, name, amount, event_id, member_id FROM payment WHERE event_id = ?
+`
+
+func (q *Queries) ListPaymentsByEventID(ctx context.Context, eventID string) ([]Payment, error) {
+	rows, err := q.db.QueryContext(ctx, listPaymentsByEventID, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Payment
+	for rows.Next() {
+		var i Payment
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Amount,
+			&i.EventID,
+			&i.MemberID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
