@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"math"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
@@ -25,6 +26,12 @@ type Payment struct {
 	Amount int
 	Payer  string
 	Payees []string
+}
+
+type Settlement struct {
+	Amount int
+	Payer  string
+	Payee  string
 }
 
 func NewEvent(name string, memberNames []string) (*Event, error) {
@@ -139,4 +146,52 @@ func (e *Event) AddPayment(name string, amount int, payer string, payees []strin
 		Payees: payees,
 	})
 	return nil
+}
+
+func (e *Event) CalcSettlements() []*Settlement {
+	if len(e.Payments) == 0 {
+		return nil
+	}
+
+	totalAmount := 0
+	paymentAmountMap := make(map[string]int, len(e.Members))
+	for _, payment := range e.Payments {
+		totalAmount += payment.Amount
+		paymentAmountMap[payment.Payer] += payment.Amount
+	}
+
+	averageAmount := totalAmount / len(e.Members)
+	for _, member := range e.Members {
+		paymentAmountMap[member.ID] -= averageAmount
+	}
+
+	settlements := make([]*Settlement, 0)
+	for {
+		var maxPayer, minPayer string
+		maxAmount := -totalAmount
+		minAmount := totalAmount
+		for payer, amount := range paymentAmountMap {
+			if amount >= maxAmount {
+				maxPayer = payer
+				maxAmount = amount
+			}
+			if amount <= minAmount {
+				minPayer = payer
+				minAmount = amount
+			}
+		}
+		// can't settle anymore
+		if maxPayer == minPayer || minAmount >= 0 {
+			break
+		}
+		settlementAmount := int(math.Min(float64(maxAmount), float64(-minAmount)))
+		paymentAmountMap[maxPayer] -= settlementAmount
+		paymentAmountMap[minPayer] += settlementAmount
+		settlements = append(settlements, &Settlement{
+			Payer:  minPayer,
+			Payee:  maxPayer,
+			Amount: settlementAmount,
+		})
+	}
+	return settlements
 }

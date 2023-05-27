@@ -9,6 +9,7 @@ import (
 type EventController interface {
 	Create(ctx context.Context, name string, memberNames []string) (*model.Event, error)
 	AddPayment(ctx context.Context, eventID string, name string, amount int, payerID string, payeeIDs []string) (*model.Event, error)
+	Get(ctx context.Context, id string) (*model.Event, error)
 }
 
 type EventControllerImpl struct {
@@ -42,4 +43,8 @@ func (c *EventControllerImpl) AddPayment(ctx context.Context, eventID string, na
 		return nil, err
 	}
 	return event, nil
+}
+
+func (c *EventControllerImpl) Get(ctx context.Context, id string) (*model.Event, error) {
+	return c.eventRepository.Get(ctx, id)
 }

@@ -10,6 +10,7 @@ import (
 type EventHandler interface {
 	Create(c echo.Context) error
 	AddPayment(c echo.Context) error
+	Get(c echo.Context) error
 }
 
 type EventHandlerImpl struct {
@@ -82,6 +83,21 @@ func (h *EventHandlerImpl) AddPayment(c echo.Context) error {
 	return h.respEvent(c, event)
 }
 
+func (h *EventHandlerImpl) Get(c echo.Context) error {
+	type Req struct {
+		ID string `param:"id"`
+	}
+	req := new(Req)
+	if err := c.Bind(req); err != nil {
+		return echo.NewHTTPError(400, err.Error())
+	}
+	event, err := h.eventController.Get(c.Request().Context(), req.ID)
+	if err != nil {
+		return echo.NewHTTPError(500, err.Error())
+	}
+	return h.respEvent(c, event)
+}
+
 func (h *EventHandlerImpl) respEvent(c echo.Context, event *model.Event) error {
 	type RespMember struct {
 		ID   string `json:"id"`
@@ -94,17 +110,25 @@ func (h *EventHandlerImpl) respEvent(c echo.Context, event *model.Event) error {
 		PayerID  string   `json:"payer_id"`
 		PayeeIDs []string `json:"payee_ids"`
 	}
-	type Resp struct {
-		ID       string         `json:"id"`
-		Name     string         `json:"name"`
-		Members  []*RespMember  `json:"members"`
-		Payments []*RespPayment `json:"payments"`
+	type RespSettlement struct {
+		PayerID string `json:"payer_id"`
+		PayeeID string `json:"payee_id"`
+		Amount  int    `json:"amount"`
 	}
+	type Resp struct {
+		ID          string            `json:"id"`
+		Name        string            `json:"name"`
+		Members     []*RespMember     `json:"members"`
+		Payments    []*RespPayment    `json:"payments"`
+		Settlements []*RespSettlement `json:"settlements"`
+	}
+	settlements := event.CalcSettlements()
 	resp := &Resp{
-		ID:       event.ID,
-		Name:     event.Name,
-		Members:  make([]*RespMember, len(event.Members)),
-		Payments: make([]*RespPayment, len(event.Payments)),
+		ID:          event.ID,
+		Name:        event.Name,
+		Members:     make([]*RespMember, len(event.Members)),
+		Payments:    make([]*RespPayment, len(event.Payments)),
+		Settlements: make([]*RespSettlement, len(settlements)),
 	}
 	for i, member := range event.Members {
 		resp.Members[i] = &RespMember{
@@ -119,6 +143,13 @@ func (h *EventHandlerImpl) respEvent(c echo.Context, event *model.Event) error {
 			Amount:   payment.Amount,
 			PayerID:  payment.Payer,
 			PayeeIDs: payment.Payees,
+		}
+	}
+	for i, settlement := range settlements {
+		resp.Settlements[i] = &RespSettlement{
+			PayerID: settlement.Payer,
+			PayeeID: settlement.Payee,
+			Amount:  settlement.Amount,
 		}
 	}
 	return c.JSON(200, resp)
