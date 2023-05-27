@@ -1,4 +1,4 @@
-.PHONEY: build up down logs db migrate-up migrate-reset migrate-status
+.PHONEY: build up down logs sqlc db migrate-up migrate-reset migrate-status
 
 build:
 	docker compose build --no-cache
@@ -11,6 +11,9 @@ down:
 
 logs:
 	docker compose logs -f
+
+sqlc:
+	docker compose exec -it app sqlc -f infra/db/sqlc.yaml generate
 
 db:
 	docker compose exec -it db mysql -ubspliter -pbspliter bspliter

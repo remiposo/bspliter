@@ -17,4 +17,5 @@ FROM golang:1.20-bullseye AS dev
 WORKDIR /app
 RUN go install github.com/cosmtrek/air@latest
 RUN go install github.com/pressly/goose/v3/cmd/goose@latest
+RUN go install github.com/kyleconroy/sqlc/cmd/sqlc@latest
 ENTRYPOINT ["air"]
