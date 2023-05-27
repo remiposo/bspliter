@@ -7,13 +7,21 @@ import (
 	"database/sql"
 	"log"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
 )
 
 func main() {
 	// db connection
-	db, err := sql.Open("mysql", "bspliter:bspliter@tcp(sfoijasofie:3306)/bspliter?parseTime=true")
+	c := mysql.NewConfig()
+	c.User = "bspliter"
+	c.Passwd = "bspliter"
+	c.Net = "tcp"
+	c.Addr = "db:3306"
+	c.DBName = "bspliter"
+	c.Collation = "utf8mb4_0900_ai_ci"
+	c.ParseTime = true
+	db, err := sql.Open("mysql", c.FormatDSN())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,5 +38,5 @@ func main() {
 	// routing
 	e := echo.New()
 	e.POST("/events", eventHandler.Create)
-	e.Logger.Fatal(e.Start(":1323"))
+	e.Logger.Fatal(e.Start(":8080"))
 }

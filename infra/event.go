@@ -52,5 +52,5 @@ func (r *EventRepositoryImpl) Store(ctx context.Context, event *model.Event) err
 			}
 		}
 	}
-	return nil
+	return tx.Commit()
 }
