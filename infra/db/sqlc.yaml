@@ -1,0 +1,11 @@
+version: "2"
+sql:
+  - schema: "ddl"
+    queries:
+      - "dml/command"
+      - "dml/query"
+    engine: "mysql"
+    gen:
+      go:
+        out: "."
+        package: "db"
